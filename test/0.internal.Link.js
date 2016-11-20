@@ -1,10 +1,11 @@
 "use strict";
-const helpers  = require("./helpers");
 const Link     = require("../lib/internal/Link");
 const urlTests = require("./helpers/json/Link.json");
 
-const expect = require("chai").expect;
-const URL = require("whatwg-url").URL;
+const {describe, it} = require("mocha");
+const {expect} = require("chai");
+const isString = require("is-string");
+const {URL} = require("universal-url");
 
 
 
@@ -14,7 +15,7 @@ describe("INTERNAL -- Link", function()
 	{
 		it("works", function()
 		{
-			expect( Link.create() ).to.be.like(
+			expect( Link.create() ).to.containSubset(
 			{
 				base: {},
 				broken_link_checker: true,
@@ -40,24 +41,51 @@ describe("INTERNAL -- Link", function()
 	
 	describe(".resolve()", function()
 	{
+		it.skip("wtf", function()
+		{
+			const obj1={};
+			const obj2={};
+			Object.defineProperty(obj1, "prop", { get:()=>1 });
+			Object.defineProperty(obj2, "prop", { get:()=>2 });
+			//expect(obj1).to.be.like(obj2);
+			//expect({ key:obj1 }).to.be.like({ key:obj2 });
+
+			const url1 = "http://domain1/";
+			const url2 = "http://domain2/";
+			expect( new URL(url1) ).to.containSubset({ href:url1 });
+			expect({ key:new URL(url1) }).to.containSubset({ key:{ href:url1 } });
+
+			expect( new URL(url1) ).to.not.containSubset({ href:url2 });
+			expect({ key:new URL(url1) }).to.not.containSubset({ key:{ href:url2 } });
+
+			expect( new URL(url1) ).to.containSubset( new URL(url1) );
+			expect({ key:new URL(url1) }).to.containSubset({ key:new URL(url1) });
+
+			// https://github.com/debitoor/chai-subset/issues/60
+			expect( new URL(url1) ).to.not.containSubset( new URL(url2) );
+			expect({ key:new URL(url1) }).to.not.containSubset({ key:new URL(url2) });
+		});
+
+
+
 		it("supports String input", function()
 		{
 			const linkUrl = "http://domain.com";
 			const link = Link.resolve(Link.create(), linkUrl, linkUrl);
-			
-			expect(link).to.be.like(
+
+			expect(link).to.containSubset(
 			{
 				url:
 				{
 					original: linkUrl,
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased:  { protocol:"http:", hostname:"domain.com", pathname:"/" },
+					resolved: new URL(linkUrl),
+					rebased:  new URL(linkUrl),
 					redirected: null
 				},
 				base:
 				{
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased : { protocol:"http:", hostname:"domain.com", pathname:"/" }
+					resolved: new URL(linkUrl),
+					rebased:  new URL(linkUrl)
 				},
 				html: { tag:null },  // No HTML has been parsed
 				http: { response:null },  // No request has been made
@@ -78,19 +106,19 @@ describe("INTERNAL -- Link", function()
 			const linkUrl = "http://domain.com/";
 			const link = Link.resolve(Link.create(), new URL(linkUrl), new URL(linkUrl));
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
 					original: linkUrl,
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased:  { protocol:"http:", hostname:"domain.com", pathname:"/" },
+					resolved: new URL(linkUrl),
+					rebased:  new URL(linkUrl),
 					redirected: null
 				},
 				base:
 				{
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased : { protocol:"http:", hostname:"domain.com", pathname:"/" }
+					resolved: new URL(linkUrl),
+					rebased : new URL(linkUrl)
 				},
 				html: { tag:null },  // No HTML has been parsed
 				http: { response:null },  // No request has been made
@@ -111,19 +139,19 @@ describe("INTERNAL -- Link", function()
 			const linkUrl = "http://domain.com/";
 			const link = Link.resolve(Link.create(), linkUrl, new URL(linkUrl));
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
 					original: linkUrl,
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased:  { protocol:"http:", hostname:"domain.com", pathname:"/" },
+					resolved: new URL(linkUrl),
+					rebased:  new URL(linkUrl),
 					redirected: null
 				},
 				base:
 				{
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased : { protocol:"http:", hostname:"domain.com", pathname:"/" }
+					resolved: new URL(linkUrl),
+					rebased : new URL(linkUrl)
 				},
 				html: { tag:null },  // No HTML has been parsed
 				http: { response:null },  // No request has been made
@@ -144,19 +172,19 @@ describe("INTERNAL -- Link", function()
 			const linkUrl = "http://domain.com/";
 			const link = Link.resolve(Link.create(), new URL(linkUrl), linkUrl);
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
 					original: linkUrl,
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased:  { protocol:"http:", hostname:"domain.com", pathname:"/" },
+					resolved: new URL(linkUrl),
+					rebased:  new URL(linkUrl),
 					redirected: null
 				},
 				base:
 				{
-					resolved: { protocol:"http:", hostname:"domain.com", pathname:"/" },
-					rebased : { protocol:"http:", hostname:"domain.com", pathname:"/" }
+					resolved: new URL(linkUrl),
+					rebased : new URL(linkUrl)
 				},
 				html: { tag:null },  // No HTML has been parsed
 				http: { response:null },  // No request has been made
@@ -169,61 +197,69 @@ describe("INTERNAL -- Link", function()
 				broken_link_checker: true
 			});
 		});
-		
-		
-		
-		function hrefOrNot(attrs, data, property)
+
+
+
+		function expectInterpolated(expected, actual, fixture)
 		{
-			const value = data[property];
-			
-			if (value == null)
+			if (actual !== null)
 			{
-				return `expect(${attrs}).to.be.${value};`;
+				// Interpolate {{text}}
+				const match = /{{([^}]+)}}/.exec(actual);
+		
+				if (match !== null)
+				{
+					actual = fixture[ match[1] ];
+				}
+
+				actual = new URL(actual);
+			}
+
+			if (actual === null)
+			{
+				expect(expected).to.be.null;
 			}
 			else
 			{
-				return `expect(${attrs}.href).to.equal(${property});`;
+				expect(expected).to.containSubset(actual);
 			}
 		}
-		
-		for (let test in urlTests)
+
+
+
+		Object.keys(urlTests).forEach( function(title)
 		{
-			const data = urlTests[test];
-			const skipOrOnly = data.skipOrOnly==null ? "" : "."+data.skipOrOnly;
-			const title = (data.resolvedLinkUrl!==null ? "accepts " : "rejects ") + helpers.a_an(test) +" "+ helpers.addSlashes(test);
-			
-			eval(`
-				it${skipOrOnly}("${title}", function()
+			const fixture = urlTests[title];
+			const it_skipOrOnly = fixture.skipOrOnly ? it[fixture.skipOrOnly] : it;
+
+			it_skipOrOnly(`${(fixture.resolvedLinkUrl !== null) ? "accepts" : "rejects"} ${title}`, function()
+			{
+				const {baseUrl, htmlBaseUrl, internal, linkUrl, rebasedBaseUrl, rebasedLinkUrl, resolvedBaseUrl, resolvedLinkUrl, samePage} = fixture;
+				const link = Link.create();
+
+				if (isString(htmlBaseUrl))
 				{
-					// Variable order coincides with the JSON
-					const linkUrl         = ${helpers.format(data.linkUrl)};
-					const baseUrl         = ${helpers.format(data.baseUrl)};
-					const htmlBaseUrl     = ${helpers.format(data.htmlBaseUrl)};
-					const resolvedLinkUrl = ${helpers.format(data.resolvedLinkUrl)};
-					const resolvedBaseUrl = ${helpers.format(data.resolvedBaseUrl)};
-					const rebasedLinkUrl  = ${helpers.format(data.rebasedLinkUrl)};
-					const rebasedBaseUrl  = ${helpers.format(data.rebasedBaseUrl)};
-					
-					const link = Link.create();
-					if (typeof htmlBaseUrl==="string") link.html.base = htmlBaseUrl;
-					
-					Link.resolve(link, linkUrl, baseUrl);
-					
-					expect(link.url.original).to.equal(linkUrl);
-					${hrefOrNot("link.url.resolved",   data, "resolvedLinkUrl"  )}
-					${hrefOrNot("link.url.rebased",    data, "rebasedLinkUrl"   )}
-					//${hrefOrNot("link.url.redirected", data, "redirectedLinkUrl")}
-					
-					${hrefOrNot("link.base.resolved", data, "resolvedBaseUrl")}
-					${hrefOrNot("link.base.rebased",  data, "rebasedBaseUrl" )}
-					
-					if (typeof htmlBaseUrl==="string") expect(link.html.base).to.equal(htmlBaseUrl);
-					
-					expect(link.internal).to.be.${data.internal};
-					expect(link.samePage).to.be.${data.samePage};
-				});
-			`);
-		}
+					link.html.base = htmlBaseUrl;
+				}
+				
+				Link.resolve(link, linkUrl, baseUrl);
+				
+				expect(link.url.original).to.equal(linkUrl);
+				expect(link.url.redirected).to.be.null;
+				expectInterpolated(link.url.resolved,  resolvedLinkUrl, fixture);
+				expectInterpolated(link.url.rebased,   rebasedLinkUrl,  fixture);
+				expectInterpolated(link.base.resolved, resolvedBaseUrl, fixture);
+				expectInterpolated(link.base.rebased,  rebasedBaseUrl,  fixture);
+				
+				if (isString(htmlBaseUrl))
+				{
+					expect(link.html.base).to.equal(htmlBaseUrl);
+				}
+				
+				expect(link.internal).to.equal(internal);
+				expect(link.samePage).to.equal(samePage);
+			});
+		});
 		
 		
 		
@@ -233,16 +269,16 @@ describe("INTERNAL -- Link", function()
 			const linkUrl = "http://domain.com/";
 			const link = Link.resolve(Link.create(), linkUrl, baseUrl);
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
-					resolved: { href:linkUrl }
+					resolved: new URL(linkUrl)
 				},
 				base:
 				{
-					resolved: { href:baseUrl },
-					rebased:  { href:baseUrl }
+					resolved: new URL(baseUrl),
+					rebased:  new URL(baseUrl)
 				},
 				internal: false,
 				samePage: false
@@ -261,16 +297,16 @@ describe("INTERNAL -- Link", function()
 			link.html.base = htmlBaseUrl;
 			Link.resolve(link, linkUrl, baseUrl);
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
-					resolved: { href:linkUrl }
+					resolved: new URL(linkUrl)
 				},
 				base:
 				{
-					resolved: { href:baseUrl },
-					rebased : { href:htmlBaseUrl }
+					resolved: new URL(baseUrl),
+					rebased : new URL(htmlBaseUrl)
 				},
 				internal: true,
 				samePage: true
@@ -285,12 +321,12 @@ describe("INTERNAL -- Link", function()
 			const linkUrl = "smtp://domain.com/";
 			const link = Link.resolve(Link.create(), linkUrl, baseUrl);
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
-					resolved: { href:linkUrl },
-					rebased:  { href:linkUrl }
+					resolved: new URL(linkUrl),
+					rebased:  new URL(linkUrl)
 				},
 				internal: false,
 				samePage: false
@@ -299,24 +335,25 @@ describe("INTERNAL -- Link", function()
 		
 		
 		
+		// TODO :: what part is rejected?
 		it("rejects a relative url with a base containing a scheme/protocol not specified as accepted", function()
 		{
 			const baseUrl = "smtp://domain.com/";
 			const linkUrl = "path/resource.html?query#hash";
 			const link = Link.resolve(Link.create(), linkUrl, baseUrl);
 			
-			expect(link).to.be.like(
+			expect(link).to.containSubset(
 			{
 				url:
 				{
 					original: linkUrl,
-					resolved: { href:baseUrl+linkUrl },
-					rebased:  { href:baseUrl+linkUrl }
+					resolved: new URL(baseUrl + linkUrl),
+					rebased:  new URL(baseUrl + linkUrl)
 				},
 				base:
 				{
-					resolved: { href:baseUrl },
-					rebased:  { href:baseUrl }
+					resolved: new URL(baseUrl),
+					rebased:  new URL(baseUrl)
 				},
 				internal: true,
 				samePage: false
@@ -343,55 +380,55 @@ describe("INTERNAL -- Link", function()
 				return link;
 			}
 			
-			expect(link(redirectedUrl1)).to.be.like(
+			expect(link(redirectedUrl1)).to.containSubset(
 			{
 				url:
 				{
 					original:   linkUrl,
-					resolved:   { href:linkUrl },
-					rebased:    { href:linkUrl },
-					redirected: { href:redirectedUrl1 }
+					resolved:   new URL(linkUrl),
+					rebased:    new URL(linkUrl),
+					redirected: new URL(redirectedUrl1)
 				},
 				base:
 				{
-					resolved: { href:baseUrl },
-					rebased:  { href:baseUrl }
+					resolved: new URL(baseUrl),
+					rebased:  new URL(baseUrl)
 				},
 				internal: true,
 				samePage: false
 			});
 			
-			expect(link(redirectedUrl2)).to.be.like(
+			expect(link(redirectedUrl2)).to.containSubset(
 			{
 				url:
 				{
 					original:   linkUrl,
-					resolved:   { href:linkUrl },
-					rebased:    { href:linkUrl },
-					redirected: { href:redirectedUrl2 }
+					resolved:   new URL(linkUrl),
+					rebased:    new URL(linkUrl),
+					redirected: new URL(redirectedUrl2)
 				},
 				base:
 				{
-					resolved: { href:baseUrl },
-					rebased:  { href:baseUrl }
+					resolved: new URL(baseUrl),
+					rebased:  new URL(baseUrl)
 				},
 				internal: false,
 				samePage: false
 			});
 			
-			expect(link(redirectedUrl3)).to.be.like(
+			expect(link(redirectedUrl3)).to.containSubset(
 			{
 				url:
 				{
 					original:   linkUrl,
-					resolved:   { href:linkUrl },
-					rebased:    { href:linkUrl },
-					redirected: { href:redirectedUrl3 }
+					resolved:   new URL(linkUrl),
+					rebased:    new URL(linkUrl),
+					redirected: new URL(redirectedUrl3)
 				},
 				base:
 				{
-					resolved: { href:baseUrl },
-					rebased:  { href:baseUrl }
+					resolved: new URL(baseUrl),
+					rebased:  new URL(baseUrl)
 				},
 				internal: false,
 				samePage: false

@@ -1,6 +1,6 @@
 "use strict";
-const fs = require("fs");
-const pathlib = require("path");
+const {createReadStream, readFileSync} = require("fs");
+const {resolve:resolvePath} = require("path");
 
 
 
@@ -8,21 +8,21 @@ function fixturePath(path)
 {
 	if (path == null) path = "";
 	
-	return pathlib.resolve( __dirname + "/../fixtures/" + path );
+	return resolvePath(`${__dirname}/../fixtures/${path}`);
 }
 
 
 
 function fixtureStream(path)
 {
-	return fs.createReadStream(fixturePath(path));
+	return createReadStream(fixturePath(path));
 }
 
 
 
 function fixtureString(path)
 {
-	return fs.readFileSync(fixturePath(path), {encoding:"utf8"});
+	return readFileSync(fixturePath(path), "utf8");
 }
 
 

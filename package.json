@@ -19,46 +19,52 @@
     "default-user-agent": "^1.0.0",
     "errno": "~0.1.4",
     "extend": "^3.0.0",
+    "es6-promise-try": "^1.0.2",
     "humanize-duration": "^3.10.0",
     "http-equiv-refresh": "^1.0.0",
+    "is-object": "^1.0.1",
+    "is-promise": "^2.1.0",
     "is-stream": "^1.1.0",
     "is-string": "^1.0.4",
-    "limited-request-queue": "^3.0.4",
+    "isurl": "^1.0.0-alpha5",
+    "limited-request-queue": "stevenvachon/limited-request-queue",
     "link-types": "^1.1.0",
     "list-to-array": "^1.1.0",
-    "maybe-callback": "^2.1.0",
     "nopter": "~0.3.0",
-    "parse5": "^3.0.1",
+    "parse5": "^3.0.2",
     "parse-srcset": "^1.0.2",
+    "pify": "^2.3.0",
+    "proxy-from-env": "^1.0.0",
     "robot-directives": "~0.3.0",
     "robots-txt-guard": "~0.1.0",
     "robots-txt-parse": "~0.0.4",
-    "specurl": "stevenvachon/specurl",
-    "urlcache": "stevenvachon/urlcache"
+    "tunnel": "0.0.4",
+    "universal-url": "^1.0.0-alpha",
+    "urlcache": "stevenvachon/urlcache",
+    "url-relation": "^1.0.0-alpha7"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "chai-like": "~0.1.10",
+    "chai-subset": "stevenvachon/chai-subset",
     "chai-things": "~0.2.0",
+    "coveralls": "^2.13.0",
     "escape-string-regexp": "^1.0.5",
-    "mocha": "^3.2.0",
-    "nock": "^9.0.2",
-    "slashes": "^1.0.5",
-    "void-elements": "^2.0.1"
+    "mocha": "^3.3.0",
+    "nock": "^9.0.13",
+    "nyc": "^10.2.0",
+    "void-elements": "^3.1.0"
   },
   "engines": {
     "node": ">= 6"
   },
   "scripts": {
-    "test": "mocha test/ --reporter spec --check-leaks --bail",
-    "test-watch": "mocha test/ --reporter spec --check-leaks --bail -w"
+    "ci": "npm run test && nyc report --reporter=text-lcov | coveralls",
+    "posttest": "nyc report --reporter=html",
+    "test": "nyc --reporter=text-summary mocha test/ --reporter=spec --check-leaks --bail",
+    "watch": "npm run test -- --watch --watch-extensions=json"
   },
-  "files": [
-    "bin",
-    "lib",
-    "license"
-  ],
+  "files": ["bin", "lib"],
   "keywords": [
     "404",
     "html",

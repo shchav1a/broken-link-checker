@@ -1,22 +1,16 @@
 "use strict";
-const server        = require("./server");
-const testGenerator = require("./testGenerator");
+const server = require("./server");
 
-const chai = require("chai");
-chai.config.includeStack = true;
-chai.use( require("chai-like") );  // TODO :: currently must be before chai-as-promised: https://github.com/zation/chai-like/issues/5
-chai.use( require("chai-as-promised") );
-chai.use( require("chai-things") );
+require("chai")
+.use( require("chai-as-promised") )
+.use( require("chai-subset") )
+.use( require("chai-things") )
+.config.includeStack = true;
 
 
 
 module.exports = 
 {
-	a_an:       testGenerator.a_an,
-	addSlashes: testGenerator.addSlashes,
-	format:     testGenerator.format,
-	//italic:     testGenerator.italic,
-	
 	options:    require("./options"),
 	
 	startDeadServer:  server.startDead,

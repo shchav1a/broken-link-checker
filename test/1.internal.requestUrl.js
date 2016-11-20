@@ -2,8 +2,9 @@
 const helpers    = require("./helpers");
 const requestUrl = require("../lib/internal/requestUrl");
 
-const expect = require("chai").expect;
-const URL = require("whatwg-url").URL;
+const {after, before, describe, it} = require("mocha");
+const {expect} = require("chai");
+const {URL} = require("universal-url");
 
 
 
@@ -16,31 +17,33 @@ describe("INTERNAL -- requestUrl", function()
 	
 	it("resolves a promise", function(done)
 	{
+		const auth = {};
 		const options = helpers.options();
 		const url = new URL("http://blc/normal/index.html");
 		
-		requestUrl(url, "get", options).then(result => done());
+		requestUrl(url, auth, "get", options).then(result => done());
 	});
 	
 	
 	
 	it("receives a GET stream", function()
 	{
+		const auth = {};
 		const options = helpers.options();
 		const url = new URL("http://blc/normal/index.html");
 		
-		return requestUrl(url, "get", options).then(result =>
+		return requestUrl(url, auth, "get", options).then( function(result)
 		{
-			expect(result.response).to.be.like(
+			expect(result.response).to.containSubset(
 			{
 				headers: { "content-type": "text/html" },
 				status: 200,
 				statusText: null,
-				//url: "http://blc:80/normal/index.html",
+				//url: { href:"http://blc:80/normal/index.html" },
 				redirects: [],
 			});
 			
-			expect(result.stream).to.be.an.instanceOf(Object);
+			expect(result.stream).to.be.an("object");
 		});
 	});
 	
@@ -48,17 +51,18 @@ describe("INTERNAL -- requestUrl", function()
 	
 	it("does not receive a HEAD stream", function()
 	{
+		const auth = {};
 		const options = helpers.options();
 		const url = new URL("http://blc/normal/index.html");
 		
-		return requestUrl(url, "head", options).then(result =>
+		return requestUrl(url, auth, "head", options).then( function(result)
 		{
-			expect(result.response).to.be.like(
+			expect(result.response).to.containSubset(
 			{
 				headers: { "content-type": "text/html" },
 				status: 200,
 				statusText: null,
-				//url: "http://blc:80/normal/index.html",
+				//url: { href:"http://blc:80/normal/index.html" },
 				redirects: [],
 			});
 			
@@ -71,17 +75,18 @@ describe("INTERNAL -- requestUrl", function()
 	// TODO :: results in "socket hang up" econnreset error
 	it.skip("does not receive a PSEUDO-HEAD stream", function()
 	{
+		const auth = {};
 		const options = helpers.options();
 		const url = new URL("http://blc/normal/index.html");
 		
-		return requestUrl(url, "pseudo-head", options).then(result =>
+		return requestUrl(url, auth, "pseudo-head", options).then( function(result)
 		{
-			expect(result.response).to.be.like(
+			expect(result.response).to.containSubset(
 			{
 				headers: { "content-type": "text/html" },
 				status: 200,
 				statusText: null,
-				//url: "http://blc:80/normal/index.html",
+				//url: { href:"http://blc:80/normal/index.html" },
 				redirects: [],
 			});
 			
@@ -93,13 +98,14 @@ describe("INTERNAL -- requestUrl", function()
 	
 	it("supports a redirect", function()
 	{
+		const auth = {};
 		const options = helpers.options();
 		const url = new URL("http://blc/redirect/redirect.html");
 		//const url = new URL("http://blc/normal/index.html");
 		
-		return requestUrl(url, "get", options).then(result =>
+		return requestUrl(url, auth, "get", options).then( function(result)
 		{
-			expect(result.response).to.be.like(
+			expect(result.response).to.containSubset(
 			{
 				headers: { "content-type": "text/html" },
 				status: 200,
@@ -119,10 +125,10 @@ describe("INTERNAL -- requestUrl", function()
 						statusText: null,
 						url: { href:"http://blc/redirect/redirect2.html" }
 					}
-				],
+				]
 			});
 			
-			expect(result.stream).to.be.an.instanceOf(Object);
+			expect(result.stream).to.be.an("object");
 		});
 	});
 });

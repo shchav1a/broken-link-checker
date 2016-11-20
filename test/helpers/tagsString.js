@@ -11,7 +11,7 @@ function stringifyTag(tagName, attrs, url)
 
 	let html = ``;
 
-	if (isTableNode === true)
+	if (isTableNode)
 	{
 		html += `<table>`;
 	}
@@ -40,7 +40,7 @@ function stringifyTag(tagName, attrs, url)
 		html += `link</${tagName}>`;
 	}
 
-	if (isTableNode === true)
+	if (isTableNode)
 	{
 		html += `</table>`;
 	}
@@ -68,7 +68,7 @@ function tagsString(filterLevel, frameset, url)
 
 	
 	
-	if (frameset === true)
+	if (frameset)
 	{
 		html += `<frameset>`;
 		html += stringifyTag("frame", filteredTags.frame, url);

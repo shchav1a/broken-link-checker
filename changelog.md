@@ -1,9 +1,12 @@
 * 0.8.0
   * dropped support for Node v0.10, v0.12 and v4
+  * API change
   * linkObj renamed to Link, and schema changed
   * options changed: `acceptedSchemes`, `excludedSchemes`
-  * arguments removed: `baseUrl` from `UrlChecker.prototype.enqueue()`
   * [WHATWG URL specification](https://url.spec.whatwg.org)-compliance
+  * added support for HTTP auth
+  * added support for HTTP proxies
+  * added support for file:// protocol
   * added missing tags/attributes
   * test suite improvements
   * bug fixes

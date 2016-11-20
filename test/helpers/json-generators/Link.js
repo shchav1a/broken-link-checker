@@ -1,8 +1,6 @@
 "use strict";
-const fs = require("fs");
-const path = require("path");
-
-const helpers = require("../");
+const {normalize:normalizePath} = require("path");
+const {writeFileSync} = require("fs");
 
 const urls = 
 {
@@ -23,7 +21,7 @@ const urls =
 
 function generate()
 {
-	saveFile( path.normalize( __dirname + "/../json/Link.json" ) );
+	saveFile( normalizePath(`${__dirname}/../json/Link.json`) );
 }
 
 
@@ -38,11 +36,8 @@ function generateData()
 		{
 			for (let htmlBase in urls)
 			{
-				output[
-					url.toUpperCase() +" url"+ 
-					" with "+ helpers.a_an(base) +" "+ base.toUpperCase() +" base"+ 
-					" and "+ htmlBase.toUpperCase() +" html base"
-				] = {
+				output[`${url.toUpperCase()} url with ${base.toUpperCase()} base and ${htmlBase.toUpperCase()} html base`] = 
+				{
 					linkUrl: urls[url],
 					baseUrl: urls[base],
 					htmlBaseUrl: urls[htmlBase],
@@ -76,9 +71,9 @@ function generateString()
 
 function saveFile(location)
 {
-	fs.writeFileSync(location, generateString());
+	writeFileSync(location, generateString());
 	
-	console.log("Written to: "+ location);
+	console.log(`Written to: ${location}`);
 }
 
 
